@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ $# -ne 0 ]; then 
+    echo "Usage: $0 <data" >&2
+    exit 1
+fi
+
+KEY="secrets_key_pub.pem"
+
+echo "Use Ctrl+D instead of enter if entering from keyboard!" >&2
+
+encrypt() {
+    openssl rsautl -encrypt -inkey "$KEY" -pubin <&0 | openssl base64 -e | tr -d '\n'
+}
+
+ENCRYPTED=$(encrypt <&0)
+
+echo
+echo "{%secret $ENCRYPTED %}"

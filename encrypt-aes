@@ -1,0 +1,32 @@
+#!/bin/sh
+
+if [ $# -ne 0 ]; then 
+    echo "Usage: $0 <data" >&2
+    exit 1
+fi
+
+PUBKEY="secrets_key_pub.pem"
+
+KEYSIZE=32
+
+encrypt_rsa() {
+    echo "$1" | openssl rsautl -encrypt -inkey "$PUBKEY" -pubin | openssl base64 -e | tr -d '\n'
+}
+
+gen_key() {
+    openssl rand -hex "$KEYSIZE"
+}
+
+encrypt() {
+    KEY="$1"
+
+    openssl enc -e -aes-256-cbc -pbkdf2 -pass "pass:$KEY" -a <&0 | tr -d '\n'
+}
+
+KEY=$(gen_key)
+
+ENCRYPTED_KEY=$(encrypt_rsa "$KEY")
+ENCRYPTED=$(encrypt "$KEY" <&0)
+
+echo
+echo "{%secret:aes $ENCRYPTED_KEY $ENCRYPTED %}"

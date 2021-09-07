@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if [ $# -ne 2 ]; then 
+    echo "Usage: $0 <base64 key> <base64 data>" >&2
+    exit 1
+fi
+
+PRIVKEY="secrets_key.pem"
+
+ENCRYPTED_KEY="$1"
+ENCRYPTED_DATA="$2"
+
+decrypt_rsa() {
+    echo "$1" | openssl base64 -d -A | openssl rsautl -decrypt -inkey "$PRIVKEY"
+}
+
+KEY=$(decrypt_rsa "$ENCRYPTED_KEY")
+
+echo "$ENCRYPTED_DATA" | openssl base64 -d -A | openssl enc -d -aes-256-cbc -pbkdf2 -pass "pass:$KEY"

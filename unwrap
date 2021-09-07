@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# TODO: combine those two
+decrypt_rsa() {
+    perl -MMIME::Base64 -pe's/\{%secret\s+([A-Za-z0-9+=\/]+)\s+%\}/`.\/secrets\/decrypt-rsa \Q$1\E`/eg'
+}
+
+decrypt_aes() {
+    perl -MMIME::Base64 -pe's/\{%secret:aes\s+([A-Za-z0-9+=\/]+)\s+([A-Za-z0-9+=\/]+)\s+%\}/`.\/secrets\/decrypt-aes \Q$1\E \Q$2\E`/eg'
+}
+
+if ! [ -d secrets ]; then
+    echo "Run this script from repository root" >&2
+    exit 1
+fi
+
+find . -type f -name 'secret$*' -print0 | while IFS= read -r -d $'\0' source; do
+    target="${source//secret$/}"
+
+    echo "Decrypting $source -> $target..."
+
+    decrypt_rsa <"$source" | decrypt_aes > "$target"
+done
